@@ -36,7 +36,18 @@ def link(option, opt_str, value, parser):
             parser.print_help()
             sys.exit(1)
         data = readers.ip_s_link(value)
-    print(data)
+    
+    rx = ['rx_bytes', 'rx_packets', 'rx_errors', 'rx_dropped', 'rx_overrun', 'rx_mcast']
+    tx = ['tx_bytes', 'tx_packets', 'tx_errors', 'tx_dropped', 'tx_carrier', 'tx_collsns']
+    for name in data.keys():
+        print(name)
+        print('RX')
+        for stat in rx:
+            print(stat + ": " + data[name][stat]
+        print('TX')
+        for stat in tx:
+            print(stat + ": " + data[name][stat]
+
 
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root
