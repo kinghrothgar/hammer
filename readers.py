@@ -48,12 +48,14 @@ def ip_s_link(int_list):
         # Find info we want
         name = re.search('^\w+', entry).group()
         if not any(name in s for s in int_list): continue
-        rx = 'RX:.*\\n\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'
-        (rx_bytes, rx_packets, rx_errors, rx_dropped, rx_overrun,\
-        rx_mcast) = re.search(rx, entry).groups()
-        
-        tx = 'TX:.*\\n\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'
-        (tx_bytes, tx_packets, tx_errors, tx_dropped, tx_carrier,\
-        tx_collsns) = re.search(tx, entry).groups()
+        rx_regex = 'RX:.*\\n\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'
+        tx_regex = 'TX:.*\\n\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'
+        keys = ['rx_bytes', 'rx_packets', 'rx_errors', 'rx_dropped',\
+        'rx_overrun', 'rx_mcast',\
+        'tx_bytes', 'tx_packets', 'tx_errors', 'tx_dropped',\
+        'tx_carrier', 'tx_collsns']
+        values = list(re.search(rx_regex, entry).groups())
+        values.extend(list(re.search(tx_regex, entry).groups()))
         # Map the stuff
-        data[name] = {
+        data[name] = dict(zip(keys, values))
+    return data
