@@ -1,0 +1,38 @@
+#!/usr/bin/python
+from __future__ import print_function
+import curses
+import time
+import optparse
+
+def main(scr):
+    for i in range(1,10):
+        scr.refresh()
+        scr.addstr(0, 0, "Line 1, Refresh %d\n" % i +
+                         "Line 2, Refresh %d\n" % i +
+                         "Line 3, Refresh %d" % i)
+        time.sleep(2)
+
+#curses.wrapper(main)
+
+def call_back_test(option, opt_str, value, parser):
+    print("option: ")
+    print(option)
+    print("opt_str: ")
+    print(opt_str)
+    print("value: ")
+    print(value)
+    print("parser: ")
+    print(parser.values)
+
+def link(option, opt_str, value, parser):
+    print("Link called with", value)
+
+# Parse settings from commandline optionsi
+# TODO: add program description including that must be run as root
+cli_parser = optparse.OptionParser(usage='Usage: %prog [OPTIONS]')
+cli_parser.add_option('-d', '--d', dest='delay', default=5, type='int', metavar='SECONDS', \
+                      help="delay between updates [default: %default seconds]")
+cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', action='callback', callback=link, \
+                      help="PUT STUFF HERE [default: %default]")
+
+(opts, args) = cli_parser.parse_args()
