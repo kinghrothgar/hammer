@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from __future__ import print_function
 import curses
 import time
 import optparse
@@ -26,7 +25,13 @@ def call_back_test(option, opt_str, value, parser):
     print(parser.values)
 
 def link(option, opt_str, value, parser):
-    print("Link called with", value)
+    interfaces = readers.ip_a()
+    if value == 'all':
+        for name in interfaces.keys():
+            print(name)
+            for stuff in interfaces[name].itervalues():
+                print(stuff)
+        
 
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root

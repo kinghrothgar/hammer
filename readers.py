@@ -16,7 +16,7 @@ def get_output(command):
 
 # Returns a dictionary of dictionaries.
 # Each interface has an entry with keys 'all' and 'ipv4'
-def ip_a:
+def ip_a():
     output = get_output('ip a')
     # Split each interface and remove empty entries
     split_output = re.split('^\d: |\\n\d: ', output)
@@ -27,12 +27,10 @@ def ip_a:
     for entry in split_output:
         # Find info we want
         name = re.search('^\w+', entry).group()
-        ipv4 = re.search('inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', entry)
-        if ipv4: ipv4 = ipv4.group(1)
-        else: continue
+        ipv4 = re.findall('inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', entry)
+        if not ipv4: continue
         # Map them
-        interfaces[name] = {'all': entry}
-        interfaces[name] = {'ipv4': ipv4}
+        interfaces[name] = {'all': entry, 'ipv4': ipv4}
     return interfaces
 
     
