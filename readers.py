@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from __future__ import print_function
 from locale import getdefaultlocale as dlocale
 import subprocess
 import re
