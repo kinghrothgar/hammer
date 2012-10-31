@@ -32,9 +32,13 @@ def link(option, opt_str, value, parser):
             for stuff in interfaces[name].itervalues():
                 print(stuff)
     else:
-        print(value)
-        for stuff in interfaces[value].itervalues():
-            print(stuff)
+        try:
+            print(value)
+            for stuff in interfaces[value].itervalues():
+                print(stuff)
+        except KeyError:
+            print("%s is not a valid interface" % value)
+            parser.print_help()
         
 
 # Parse settings from commandline options
