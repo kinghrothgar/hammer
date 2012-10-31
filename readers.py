@@ -13,14 +13,16 @@ def get_output(command):
     return str(stdout.decode(encoding))
 
 
+# Get interfaces with assigned ipv4 addresses
 # Returns a dictionary of dictionaries.
-# Each interface has an entry with keys 'all' and 'ipv4'
+# Each interface has an entry with keys 'all' (a string) 
+# and 'ipv4' (A list of IPs)
 def ip_a():
     output = get_output('ip a')
     # Split each interface and remove empty entries
     split_output = re.split('^\d: |\\n\d: ', output)
     split_output.remove('')
-    # Hash to store all interfaces with info about them
+    # Dictionary to store all interfaces with info about them
     interfaces = {}
     # Compile info from output into dictionary only if it has an ipv4
     for entry in split_output:
@@ -32,4 +34,26 @@ def ip_a():
         interfaces[name] = {'all': entry, 'ipv4': ipv4}
     return interfaces
 
-    
+
+# Argument is a list of interfaces
+def ip_s_link(int_list):
+    output = get_output('ip -s link')
+    # Split each interface and remove empty entries
+    split_output = re.split('^\d: |\\n\d: ', output)
+    split_output.remove('')
+    # Dictionary to store data
+    data = {}
+    # Compile info from output if it's in int_list
+    for entry in split_output:
+        # Find info we want
+        name = re.search('^\w+', entry).group()
+        if not any(name in s for s in int_list): continue
+        rx = 'RX:.*\\n\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'
+        (rx_bytes, rx_packets, rx_errors, rx_dropped, rx_overrun,\
+        rx_mcast) = re.search(rx, entry).groups()
+        
+        tx = 'TX:.*\\n\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'
+        (tx_bytes, tx_packets, tx_errors, tx_dropped, tx_carrier,\
+        tx_collsns) = re.search(tx, entry).groups()
+        # Map the stuff
+        data[name] = {

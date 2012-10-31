@@ -43,7 +43,7 @@ def link(option, opt_str, value, parser):
 
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root
-cli_parser = optparse.OptionParser(usage='Usage: %prog [OPTIONS]')
+cli_parser = optparse.OptionParser(usage='%prog [OPTIONS]')
 cli_parser.add_option('-d', '--d', dest='delay', default=5, type='int', metavar='SECONDS', \
                       help="delay between updates [default: %default seconds]")
 cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', action='callback', callback=link, \
