@@ -23,8 +23,7 @@ def call_back_test(option, opt_str, value, parser):
     print("parser: ")
     print(parser.values)
 
-def link(option, opt_str, value, parser):
-    interfaces = readers.ip_a()
+def get_link_data(interfaces, names)
     if value == 'all':
         data = readers.ip_s_link(interfaces.keys())
     else:
@@ -34,23 +33,32 @@ def link(option, opt_str, value, parser):
             parser.print_help()
             sys.exit(1)
         data = readers.ip_s_link(value)
+    return data
+
+    
+def link(stdscr, option, opt_str, value, parser):
+    interfaces = readers.ip_a()
+    original_data = get_link_data(interfaces, value)
     output = ''
     for name in data.keys():
         ips = ', '.join(interfaces[name]['ipv4'])
         section = Template(templates.link).safe_substitute(data[name], ips=ips, name=name)
         output += section + "\n\n"
-    stdscr = curses.initscr()
     stdscr.addstr(0, 0, output)
     stdscr.refresh()
     time.sleep(5)
     #screen_print(stdscr, output)
+
+
+def link_wrapper(option, opt_str, value, parser):
+   curses.wrapper(link, option, opt_str, value, parser) 
 
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root
 cli_parser = optparse.OptionParser(usage='%prog [OPTIONS]')
 cli_parser.add_option('-d', '--d', dest='delay', default=5, type='int', metavar='SECONDS', \
                       help="delay between updates [default: %default seconds]")
-cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', action='callback', callback=link, \
+cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', action='callback', callback=link_wrapper, \
                       help="PUT STUFF HERE [default: %default]")
 
 (opts, args) = cli_parser.parse_args()
