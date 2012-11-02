@@ -23,42 +23,56 @@ def call_back_test(option, opt_str, value, parser):
     print("parser: ")
     print(parser.values)
 
-def get_link_data(interfaces, names)
-    if value == 'all':
+def get_link_data(interfaces, names):
+    if opts.link == 'all':
         data = readers.ip_s_link(interfaces.keys())
     else:
-        try: interfaces[value]
+        try: interfaces[opts.link]
         except KeyError:
-            print("%s is not a valid interface" % value)
+            print("%s is not a valid interface" % opts.link)
             parser.print_help()
             sys.exit(1)
-        data = readers.ip_s_link(value)
+        data = readers.ip_s_link(opts.link)
     return data
 
-    
-def link(stdscr, option, opt_str, value, parser):
+
+# Takes two dictionaries, returns dictionary
+def compare(original, current):
+    delta = {}
+    for name in original.keys():
+        delta[name] = {}
+        for data in original[name].keys():
+            delta[name][data] = str(int(current[name][data])\
+                                -int(original[name][data]))
+    return delta
+
+
+def link(stdscr):
     interfaces = readers.ip_a()
-    original_data = get_link_data(interfaces, value)
-    output = ''
-    for name in data.keys():
-        ips = ', '.join(interfaces[name]['ipv4'])
-        section = Template(templates.link).safe_substitute(data[name], ips=ips, name=name)
-        output += section + "\n\n"
-    stdscr.addstr(0, 0, output)
-    stdscr.refresh()
-    time.sleep(5)
-    #screen_print(stdscr, output)
+    original_data = get_link_data(interfaces, opts.link)
+    while True:
+        current_data = get_link_data(interfaces, opts.link)
+        delta_data = compare(original_data, current_data)
+        output = ''
+        for name in delta_data.keys():
+            ips = ', '.join(interfaces[name]['ipv4'])
+            section = Template(templates.link).safe_substitute(delta_data[name], ips=ips, name=name)
+            output += section + "\n\n"
+        stdscr.addstr(0, 0, output)
+        stdscr.refresh()
+        time.sleep(opts.delay)
+        #screen_print(stdscr, output)
 
-
-def link_wrapper(option, opt_str, value, parser):
-   curses.wrapper(link, option, opt_str, value, parser) 
 
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root
 cli_parser = optparse.OptionParser(usage='%prog [OPTIONS]')
 cli_parser.add_option('-d', '--d', dest='delay', default=5, type='int', metavar='SECONDS', \
                       help="delay between updates [default: %default seconds]")
-cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', action='callback', callback=link_wrapper, \
+cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', \
                       help="PUT STUFF HERE [default: %default]")
-
+cli_parser.add_option('-t', '--test', dest='test', type='string', metavar='TEST', action='callback', callback=call_back_test, \
+                      help="PUT STUFF HERE [default: %default]")
 (opts, args) = cli_parser.parse_args()
+if opts.link:
+    curses.wrapper(link)
