@@ -59,3 +59,21 @@ def ip_s_link(int_list):
         # Map the stuff
         data[name] = dict(zip(keys, values))
     return data
+
+
+def netstat_s(sect_list):
+    output = get_output('netstat -s')
+    # Split each section up and remove empty entries
+    data = {}
+    section = ''
+    for line in output.split('\n'):
+        if re.match('^\w+:', line)
+            section = line.strip(':')
+            # If the section matches any of the sections in sect_list
+            if any(section.lower() in s.lower() for s in sect_list):
+                data[section] = {}
+            else:
+                section = ''
+        elif section != '':
+            
+    return output

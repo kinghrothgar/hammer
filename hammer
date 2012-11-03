@@ -7,22 +7,6 @@ import sys
 import templates
 from string import Template
 
-def screen_print(scr, output):
-    scr.refresh()
-    scr.addstr(0, 0, output)
-
-#curses.wrapper(main)
-
-def call_back_test(option, opt_str, value, parser):
-    print("option: ")
-    print(option)
-    print("opt_str: ")
-    print(opt_str)
-    print("value: ")
-    print(value)
-    print("parser: ")
-    print(parser.values)
-
 def get_link_data(interfaces, names):
     if opts.link == 'all':
         data = readers.ip_s_link(interfaces.keys())
@@ -61,7 +45,6 @@ def link(stdscr):
         stdscr.addstr(0, 0, output)
         stdscr.refresh()
         time.sleep(opts.delay)
-        #screen_print(stdscr, output)
 
 
 # Parse settings from commandline options
