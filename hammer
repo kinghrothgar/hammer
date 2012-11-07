@@ -7,7 +7,27 @@ import sys
 import templates
 from string import Template
 
-def get_link_data(interfaces, names):
+# Takes two dictionaries, returns one dictionary
+def compare(original, current):
+    delta = {}
+    for data in original.keys():
+        delta[data] = str(int(current[data])\
+                            -int(original[data]))
+    return delta
+
+
+# Takes two nested dictionaries, returns one nested dictionary
+def compare_nested(original, current):
+    delta = {}
+    for name in original.keys():
+        delta[name] = {}
+        for data in original[name].keys():
+            delta[name][data] = str(int(current[name][data])\
+                                -int(original[name][data]))
+    return delta
+
+
+def get_link_data(interfaces):
     if opts.link == 'all':
         data = readers.ip_s_link(interfaces.keys())
     else:
@@ -20,42 +40,65 @@ def get_link_data(interfaces, names):
     return data
 
 
-# Takes two dictionaries, returns dictionary
-def compare(original, current):
-    delta = {}
-    for name in original.keys():
-        delta[name] = {}
-        for data in original[name].keys():
-            delta[name][data] = str(int(current[name][data])\
-                                -int(original[name][data]))
-    return delta
-
-
 def link(stdscr):
     interfaces = readers.ip_a()
-    original_data = get_link_data(interfaces, opts.link)
+    original_data = get_link_data(interfaces)
     while True:
-        current_data = get_link_data(interfaces, opts.link)
-        delta_data = compare(original_data, current_data)
+        current_data = get_link_data(interfaces)
+        delta_data = compare_nested(original_data, current_data)
         output = ''
         for name in delta_data.keys():
             ips = ', '.join(interfaces[name]['ipv4'])
+            # Substitute the delta values into the template
             section = Template(templates.link).safe_substitute(delta_data[name], ips=ips, name=name)
+            # Substitute the absolute values in
+            section = section.replace('_abso', '')
+            section = Template(section).safe_substitute(current_data[name])
             output += section + "\n\n"
         stdscr.addstr(0, 0, output)
         stdscr.refresh()
         time.sleep(opts.delay)
 
 
+def ip(stdscr):
+    sect_list = ['Ip','IpExt']
+    original_data = readers.netstat_s(sect_list)
+    while True:
+        current_data = readers.netstat_s(sect_list)
+        delta_data = compare(original_data, current_data)
+        # Substitute the delta values into the template
+        output = Template(templates.ip).safe_substitute(delta_data)
+        # Substitute the absolute values in
+        output = output.replace('_abso', '')
+        output = Template(output).safe_substitute(current_data)
+
+        stdscr.addstr(0, 0, output)
+        stdscr.refresh()
+        time.sleep(opts.delay)
+
+        
+
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root
+# TODO: group require options (
 cli_parser = optparse.OptionParser(usage='%prog [OPTIONS]')
 cli_parser.add_option('-d', '--d', dest='delay', default=5, type='int', metavar='SECONDS', \
                       help="delay between updates [default: %default seconds]")
 cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', \
                       help="PUT STUFF HERE [default: %default]")
-cli_parser.add_option('-t', '--test', dest='test', type='string', metavar='TEST', action='callback', callback=call_back_test, \
-                      help="PUT STUFF HERE [default: %default]")
+cli_parser.add_option('-i', '--ip', dest='ip', default=False, action='store_true', \
+                      help="PUT STUFF HERE")
+
 (opts, args) = cli_parser.parse_args()
+
+# Verify arguments
+if opts.link and opts.ip:
+    print('hammer: error: invalid option combination, see help')
+    sys.exit(1)
+elif not (opts.link and opts.ip):
+    print('hammer: error: missing required option, see help')
+
 if opts.link:
     curses.wrapper(link)
+elif opts.ip:
+    curses.wrapper(ip)

@@ -60,20 +60,24 @@ def ip_s_link(int_list):
         data[name] = dict(zip(keys, values))
     return data
 
-
 def netstat_s(sect_list):
     output = get_output('netstat -s')
     # Split each section up and remove empty entries
     data = {}
     section = ''
-    for line in output.split('\n'):
-        if re.match('^\w+:', line)
+    split_output = output.split('\n')
+    split_output.remove('')
+    for line in split_output:
+        # If line is a section header
+        if re.match('^\w+:', line):
             section = line.strip(':')
-            # If the section matches any of the sections in sect_list
-            if any(section.lower() in s.lower() for s in sect_list):
-                data[section] = {}
-            else:
+            # Clear section if section not in sect_list
+            if not any(section.lower() in s.lower() for s in sect_list):
                 section = ''
+        # If line not a section header, but in section we care about
         elif section != '':
-            
-    return output
+            key = re.sub('[^a-zA-Z](?!:)', '', line)
+            value = re.search('\d+$|\d+ ', line).group()
+            value = value.strip()
+            data[key] = value
+    return data
