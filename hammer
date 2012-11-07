@@ -5,6 +5,7 @@ import optparse
 import readers
 import sys
 import templates
+import re
 from string import Template
 
 # Takes two dictionaries, returns one dictionary
@@ -71,6 +72,8 @@ def ip(stdscr):
         # Substitute the absolute values in
         output = output.replace('_abso', '')
         output = Template(output).safe_substitute(current_data)
+        # Remove any lines with unfilled in data
+        output = re.sub('\\n[^\\]+\$[^\\]+', '', output)
 
         stdscr.addstr(0, 0, output)
         stdscr.refresh()
