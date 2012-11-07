@@ -73,7 +73,7 @@ def ip(stdscr):
         output = output.replace('_abso', '')
         output = Template(output).safe_substitute(current_data)
         # Remove any lines with unfilled in data
-        output = re.sub('\\n[^\\]+\$[^\\]+', '', output)
+        output = re.sub('\n[^\n]+\$[^\n]+', '', output)
 
         stdscr.addstr(0, 0, output)
         stdscr.refresh()

@@ -20,7 +20,7 @@ def get_output(command):
 def ip_a():
     output = get_output('ip a')
     # Split each interface and remove empty entries
-    split_output = re.split('^\d: |\\n\d: ', output)
+    split_output = re.split('^\d: |\n\d: ', output)
     split_output.remove('')
     # Dictionary to store all interfaces with info about them
     interfaces = {}
