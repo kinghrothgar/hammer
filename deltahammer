@@ -38,10 +38,26 @@ def get_link_data(interfaces):
     return data
 
 
+# Takes a curses window
+# Exits if key is q, else returns key
+def get_key(stdscr):
+    stdscr.nodelay(True) # make getkey not wait
+    try: key = stdscr.getkey()
+    except: key = None
+    else: return key
+
+
 def link(stdscr):
     interfaces = readers.ip_a()
     original_data = get_link_data(interfaces)
     while True:
+        # Get key and deal with it
+        key = get_key(stdscr)
+        if key == 'q': sys.exit(0)
+        if key == 'r':
+            opts.start_time=time.strftime("%X", time.localtime())
+            original_data = get_link_data(interfaces)
+        
         current_data = get_link_data(interfaces)
         delta_data = compare_nested(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
@@ -64,6 +80,13 @@ def ip(stdscr):
     sect_list = ['Ip','IpExt']
     original_data = readers.netstat_s(sect_list)
     while True:
+        # Get key and deal with it
+        key = get_key(stdscr)
+        if key == 'q': sys.exit(0)
+        if key == 'r':
+            opts.start_time=time.strftime("%X", time.localtime())
+            original_data = get_link_data(interfaces)
+        
         current_data = readers.netstat_s(sect_list)
         delta_data = compare(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
