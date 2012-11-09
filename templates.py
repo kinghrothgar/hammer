@@ -1,5 +1,11 @@
 #!/usr/bin/python2.6
 
+header="""          [Delta Hammer] 
+info from '$command' every $delta sec
+Start: $start_time | Current: $current_time
+
+"""
+
 link="""[$name] $ips
     RX  bytes: $rx_bytes ($rx_bytes_abso)
         packets: $rx_packets ($rx_packets_abso)
@@ -9,8 +15,7 @@ link="""[$name] $ips
         errors:$tx_errors ($tx_errors_abso) dropped:$tx_dropped ($tx_dropped_abso) carrier:$tx_carrier ($tx_carrier_abso) collsns:$tx_collsns ($tx_collsns_abso)"""
 
 
-ip="""
-Ip:
+ip="""Ip:
     $totalpacketsreceived ($totalpacketsreceived_abso) total packets received
     $withinvalidaddresses ($withinvalidaddresses_abso) with invalid addresses 
     $forwarded ($forwarded_abso) forwarded

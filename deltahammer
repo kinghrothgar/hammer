@@ -33,11 +33,8 @@ def get_link_data(interfaces):
         data = readers.ip_s_link(interfaces.keys())
     else:
         try: interfaces[opts.link]
-        except KeyError:
-            print("%s is not a valid interface" % opts.link)
-            parser.print_help()
-            sys.exit(1)
-        data = readers.ip_s_link(opts.link)
+        except KeyError: sys.exit("error: %s is not a valid interface" % opts.link)
+        data = readers.ip_s_link([opts.link])
     return data
 
 
@@ -47,7 +44,9 @@ def link(stdscr):
     while True:
         current_data = get_link_data(interfaces)
         delta_data = compare_nested(original_data, current_data)
-        output = ''
+        current_time=time.strftime("%X", time.localtime())
+        output = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
+                                                            start_time=opts.start_time, current_time=current_time)
         for name in delta_data.keys():
             ips = ', '.join(interfaces[name]['ipv4'])
             # Substitute the delta values into the template
@@ -67,8 +66,11 @@ def ip(stdscr):
     while True:
         current_data = readers.netstat_s(sect_list)
         delta_data = compare(original_data, current_data)
+        current_time=time.strftime("%X", time.localtime())
+        output = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
+                                                            start_time=opts.start_time, current_time=current_time)
         # Substitute the delta values into the template
-        output = Template(templates.ip).safe_substitute(delta_data)
+        output += Template(templates.ip).safe_substitute(delta_data)
         # Substitute the absolute values in
         output = output.replace('_abso', '')
         output = Template(output).safe_substitute(current_data)
@@ -96,10 +98,12 @@ cli_parser.add_option('-i', '--ip', dest='ip', default=False, action='store_true
 
 # Verify arguments
 if opts.link and opts.ip:
-    print('hammer: error: invalid option combination, see help')
-    sys.exit(1)
-elif not (opts.link and opts.ip):
-    print('hammer: error: missing required option, see help')
+    sys.exit('error: invalid option combination, see help')
+elif not (opts.link or opts.ip):
+    sys.exit('error: missing required option, see help')
+
+# Set start time
+opts.start_time=time.strftime("%X", time.localtime())
 
 if opts.link:
     curses.wrapper(link)
