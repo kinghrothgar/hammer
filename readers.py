@@ -18,7 +18,7 @@ def get_output(command):
 # Each interface has an entry with keys 'all' (a string) 
 # and 'ipv4' (A list of IPs)
 def ip_a():
-    output = get_output('ip a')
+    output = get_output('/sbin/ip a')
     # Split each interface and remove empty entries
     split_output = re.split('^\d: |\n\d: ', output)
     split_output.remove('')
@@ -37,7 +37,7 @@ def ip_a():
 
 # Argument is a list of interfaces
 def ip_s_link(int_list):
-    output = get_output('ip -s link')
+    output = get_output('/sbin/ip -s link')
     # Split each interface and remove empty entries
     split_output = re.split('^\d: |\\n\d: ', output)
     split_output.remove('')
