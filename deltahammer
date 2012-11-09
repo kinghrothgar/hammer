@@ -50,10 +50,12 @@ def get_key(stdscr):
 def link(stdscr):
     interfaces = readers.ip_a()
     original_data = get_link_data(interfaces)
+    output = None
     while True:
         # Get key and deal with it
         key = get_key(stdscr)
-        if key == 'q': sys.exit(0)
+        if key == 'q':
+            return output 
         if key == 'r':
             opts.start_time=time.strftime("%X", time.localtime())
             original_data = get_link_data(interfaces)
@@ -79,18 +81,25 @@ def link(stdscr):
 def ip(stdscr):
     sect_list = ['Ip','IpExt']
     original_data = readers.netstat_s(sect_list)
+    output = None
     while True:
         # Get key and deal with it
         key = get_key(stdscr)
-        if key == 'q': sys.exit(0)
-        if key == 'r':
+        if key == 'q':
+            return output 
+        elif key == 'r':
             opts.start_time=time.strftime("%X", time.localtime())
-            original_data = get_link_data(interfaces)
+            original_data = readers.netstat_s(sect_list)
+        elif key == '+':
+            opts.delay += 1
+        elif key == '-':
+            if opts.delay > 0: opts.delay -= 1
+        else: output = key + "\n"
         
         current_data = readers.netstat_s(sect_list)
         delta_data = compare(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
-        output = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
+        output += Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
                                                             start_time=opts.start_time, current_time=current_time)
         # Substitute the delta values into the template
         output += Template(templates.ip).safe_substitute(delta_data)
@@ -124,11 +133,16 @@ if opts.link and opts.ip:
     sys.exit('error: invalid option combination, see help')
 elif not (opts.link or opts.ip):
     sys.exit('error: missing required option, see help')
+elif opts.delay < 0:
+    sys.exit('error: delay time cannot be less than 0')
 
 # Set start time
 opts.start_time=time.strftime("%X", time.localtime())
 
 if opts.link:
-    curses.wrapper(link)
+    output = curses.wrapper(link)
 elif opts.ip:
-    curses.wrapper(ip)
+    output = curses.wrapper(ip)
+
+print(output)
+sys.exit(0)
