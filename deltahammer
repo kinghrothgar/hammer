@@ -48,6 +48,7 @@ def get_key(stdscr):
 
 
 def link(stdscr):
+    curses.use_default_colors()
     interfaces = readers.ip_a()
     original_data = get_link_data(interfaces)
     output = None
