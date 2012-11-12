@@ -56,9 +56,13 @@ def link(stdscr):
         key = get_key(stdscr)
         if key == 'q':
             return output 
-        if key == 'r':
+        elif key == 'r':
             opts.start_time=time.strftime("%X", time.localtime())
-            original_data = get_link_data(interfaces)
+            original_data = readers.netstat_s(sect_list)
+        elif key == '+':
+            opts.delay += 1
+        elif key == '-':
+            if opts.delay > 0: opts.delay -= 1
         
         current_data = get_link_data(interfaces)
         delta_data = compare_nested(original_data, current_data)
@@ -79,6 +83,7 @@ def link(stdscr):
 
 
 def ip(stdscr):
+    curses.use_default_colors()
     sect_list = ['Ip','IpExt']
     original_data = readers.netstat_s(sect_list)
     output = None
@@ -94,12 +99,11 @@ def ip(stdscr):
             opts.delay += 1
         elif key == '-':
             if opts.delay > 0: opts.delay -= 1
-        else: output = key + "\n"
         
         current_data = readers.netstat_s(sect_list)
         delta_data = compare(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
-        output += Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
+        output = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
                                                             start_time=opts.start_time, current_time=current_time)
         # Substitute the delta values into the template
         output += Template(templates.ip).safe_substitute(delta_data)
