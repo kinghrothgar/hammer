@@ -73,7 +73,17 @@ def get_key(stdscr):
 # Returns: string containing the requested section of the body
 #          int the page number returned
 #          int the last page number
-def get_page(body, page, height):
+def get_stats_page(stdscr, template, original_data, current_data, requested_page):
+    (height, width) = stdscr.getmaxyx()
+    delta_data = compare(original_data, current_data)
+    # Substitute the delta values into the template
+    body = Template(template).safe_substitute(delta_data)
+    # Substitute the absolute values in
+    body = body.replace('_abso', '')
+    body = Template(body).safe_substitute(current_data)
+    # Remove any lines with unfilled in data
+    body = re.sub('\n[^\n]+\$[^\n]+', '', body)
+    # Get current page from body
     header_len = len(re.findall('\n', templates.header))
     body_len = len(re.findall('\n', body))
     usable_height = height - header_len
@@ -91,9 +101,21 @@ def get_page(body, page, height):
             page_dic[current_page] += body_split[index]
         else:
             page_dic[current_page] += body_split[index] + '\n'
-    if page > current_page:
-        page = current_page
-    return (page_dic[page], page, current_page)
+    # If requested_page is greater than the last page, set to last page
+    if requested_page > current_page:
+        requested_page = current_page
+    return (page_dic[requested_page], requested_page, current_page)
+
+
+# Updates screen, EXITS if string fails to post correctly
+# Arguments: stdscr - a curses window
+#            output - string to post
+def post(stdscr, output):
+        stdscr.clear()
+        try: stdscr.addstr(0, 0, output)
+        except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
+        stdscr.refresh()
+        time.sleep(opts.delay)
 
 
 # Main function for the interface page
@@ -130,12 +152,8 @@ def link(stdscr):
             section = section.replace('_abso', '')
             section = Template(section).safe_substitute(current_data[name])
             output += section + "\n\n"
-        
-        try: stdscr.addstr(0, 0, output)
-        except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
-        stdscr.clear()
-        stdscr.refresh()
-        time.sleep(opts.delay)
+        # Post output to screen
+        post(stdscr, output)
 
 
 # Main function for the statistics IP page
@@ -143,7 +161,6 @@ def link(stdscr):
 # Return: a string of the last output
 def statistics_ip(stdscr):
     curses.use_default_colors()
-    (height, width) = stdscr.getmaxyx()
     sect_list = ['Ip','IpExt']
     original_data = get_statistics_ip_data(sect_list)
     output = None
@@ -167,29 +184,16 @@ def statistics_ip(stdscr):
             current_page += 1
         
         current_data = get_statistics_ip_data(sect_list)
-        delta_data = compare(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
-        
-        # Substitute the delta values into the template
-        body = Template(templates.ip).safe_substitute(delta_data)
-        # Substitute the absolute values in
-        body = body.replace('_abso', '')
-        body = Template(body).safe_substitute(current_data)
-        # Remove any lines with unfilled in data
-        body = re.sub('\n[^\n]+\$[^\n]+', '', body)
-        (body, current_page, last_page) = get_page(body, current_page, height)
-
+        # Compiles body and then caculates the current section that can fit on the screen
+        (body, current_page, last_page) = get_stats_page(stdscr, templates.ip, original_data, current_data, current_page) 
         header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
                                                             start_time=opts.start_time, current_time=current_time,
                                                             current_page=current_page, last_page=last_page)
         # Compile header, body, and footer to output
         output = header + body
-
-        stdscr.clear()
-        try: stdscr.addstr(0, 0, output)
-        except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
-        stdscr.refresh()
-        time.sleep(opts.delay)
+        # Post output to screen
+        post(stdscr, output)
 
         
 # Main function for the statistics IP page
@@ -197,7 +201,6 @@ def statistics_ip(stdscr):
 # Return: a string of the last output
 def statistics_tcpv(stdscr):
     curses.use_default_colors()
-    (height, width) = stdscr.getmaxyx()
     sect_list = ['Tcp','TcpExt']
     original_data = readers.netstat_s(sect_list)
     output = None
@@ -221,27 +224,16 @@ def statistics_tcpv(stdscr):
             current_page += 1
         
         current_data = readers.netstat_s(sect_list)
-        delta_data = compare(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
-        # Substitute the delta values into the template
-        body += Template(templates.ip).safe_substitute(delta_data)
-        # Substitute the absolute values in
-        body = body.replace('_abso', '')
-        body = Template(body).safe_substitute(current_data)
-        # Remove any lines with unfilled in data
-        body = re.sub('\n[^\n]+\$[^\n]+', '', output)
-        
-        header = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
+        # Compiles body and then caculates the current section that can fit on the screen
+        (body, current_page, last_page) = get_stats_page(stdscr, templates.tcp, original_data, current_data, current_page)
+        header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
                                                             start_time=opts.start_time, current_time=current_time)
 
         # Compile header, body, and footer to output
         output = header + body
-
-        stdscr.clear()
-        try: stdscr.addstr(0, 0, output)
-        except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
-        stdscr.refresh()
-        time.sleep(opts.delay)
+        # Post output to screen
+        post(stdscr, output)
 
 
 # Parse settings from commandline options
