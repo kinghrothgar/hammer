@@ -8,7 +8,12 @@ import templates
 import re
 from string import Template
 
-# Takes two dictionaries, returns one dictionary
+description="""Description: %prog is a tool to monitor the delta of data and statistics from various static commands.
+The program requires either the interface option (-i INTERFACE) or the statistics option (-s TARGET)."""
+
+
+# Arguments: two dictionaries
+# Return: one dictionary
 def compare(original, current):
     delta = {}
     for data in original.keys():
@@ -17,7 +22,8 @@ def compare(original, current):
     return delta
 
 
-# Takes two nested dictionaries, returns one nested dictionary
+# Arguments: two nested dictionaries
+# Return: one nested dictionary
 def compare_nested(original, current):
     delta = {}
     for name in original.keys():
@@ -28,18 +34,31 @@ def compare_nested(original, current):
     return delta
 
 
+# Decides what arguments to call readers.ip_s_link with depending on what argument was given
+# Argument: a dictionary containing interface names as the keys and a list of all IPs assigned 
+#           to that interface as the value.
+# Return: a dictionary for every interface nested in a parent dictionary
 def get_link_data(interfaces):
-    if opts.link == 'all':
+    if opts.interface == 'all':
         data = readers.ip_s_link(interfaces.keys())
     else:
-        try: interfaces[opts.link]
-        except KeyError: sys.exit("error: %s is not a valid interface" % opts.link)
-        data = readers.ip_s_link([opts.link])
+        try: interfaces[opts.interface]
+        except KeyError: sys.exit("error: %s is not a valid interface (try 'all')" % opts.interface)
+        data = readers.ip_s_link([opts.interface])
     return data
 
 
-# Takes a curses window
-# Exits if key is q, else returns key
+# Argument: a list of sections from 'netstat -s'
+# Return: a dictionary containing all the data needed from 'netstat -s' with SYN_RECV count added
+def get_statistics_ip_data(sect_list):
+    data = readers.netstat_s(sect_list)
+    data['syn_recv_count'] = readers.get_output('/usr/sbin/ss -t -a state syn-recv | wc -l').strip()
+    return data
+
+
+# Tries to get the next key pressed
+# Argument: a curses window
+# Return: a char containing the next key pressed or None
 def get_key(stdscr):
     stdscr.nodelay(True) # make getkey not wait
     try: key = stdscr.getkey()
@@ -47,6 +66,9 @@ def get_key(stdscr):
     else: return key
 
 
+# Main function for the interface page
+# Argument: a curses window
+# Return: a string of the last output
 def link(stdscr):
     curses.use_default_colors()
     interfaces = readers.ip_a()
@@ -63,7 +85,7 @@ def link(stdscr):
         elif key == '+':
             opts.delay += 1
         elif key == '-':
-            if opts.delay > 0: opts.delay -= 1
+            if opts.delay > 1: opts.delay -= 1
         
         current_data = get_link_data(interfaces)
         delta_data = compare_nested(original_data, current_data)
@@ -83,10 +105,13 @@ def link(stdscr):
         time.sleep(opts.delay)
 
 
-def ip(stdscr):
+# Main function for the statistics IP page
+# Argument: a curses window
+# Return: a string of the last output
+def statistics_ip(stdscr):
     curses.use_default_colors()
     sect_list = ['Ip','IpExt']
-    original_data = readers.netstat_s(sect_list)
+    original_data = get_statistics_ip_data(sect_list)
     output = None
     while True:
         # Get key and deal with it
@@ -95,13 +120,13 @@ def ip(stdscr):
             return output 
         elif key == 'r':
             opts.start_time=time.strftime("%X", time.localtime())
-            original_data = readers.netstat_s(sect_list)
+            original_data = get_statistics_ip_data(sect_list)
         elif key == '+':
             opts.delay += 1
         elif key == '-':
-            if opts.delay > 0: opts.delay -= 1
+            if opts.delay > 1: opts.delay -= 1
         
-        current_data = readers.netstat_s(sect_list)
+        current_data = get_statistics_ip_data(sect_list)
         delta_data = compare(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
         output = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
@@ -123,31 +148,32 @@ def ip(stdscr):
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root
 # TODO: group require options (
-cli_parser = optparse.OptionParser(usage='%prog [OPTIONS]')
-cli_parser.add_option('-d', '--d', dest='delay', default=5, type='int', metavar='SECONDS', \
-                      help="delay between updates [default: %default seconds]")
-cli_parser.add_option('-l', '--link', dest='link', type='string', metavar='INTERFACE', \
-                      help="PUT STUFF HERE [default: %default]")
-cli_parser.add_option('-i', '--ip', dest='ip', default=False, action='store_true', \
-                      help="PUT STUFF HERE")
+cli_parser = optparse.OptionParser(usage='%prog [OPTIONS]',
+                                   description=description)
+cli_parser.add_option('-d', '--delay', dest='delay', default=5, type='int', metavar='SECONDS', \
+                      help="Delay between updates [default: %default seconds]")
+cli_parser.add_option('-i', '--interface', dest='interface', type='string', metavar='INTERFACE', \
+                      help="Shows link status of specified interface (or put 'all'). Output similar to 'ifconfig' or 'ip -s link'")
+cli_parser.add_option('-s', '--statistics', dest='statistics', type='choice', choices=['ip', 'tcp', 'tcpv'], metavar='TARGET', \
+                      help="Shows various statistics from 'netstat -s'.  Must specify a target to watch (options are: ip, tcp, tcpv)")
 
 (opts, args) = cli_parser.parse_args()
 
 # Verify arguments
-if opts.link and opts.ip:
+if opts.interface and opts.statistics:
     sys.exit('error: invalid option combination, see help')
-elif not (opts.link or opts.ip):
+elif not (opts.interface or opts.statistics):
     sys.exit('error: missing required option, see help')
-elif opts.delay < 0:
-    sys.exit('error: delay time cannot be less than 0')
+elif opts.delay < 1:
+    sys.exit('error: delay time cannot be less than 1')
 
 # Set start time
 opts.start_time=time.strftime("%X", time.localtime())
 
-if opts.link:
+if opts.interface:
     output = curses.wrapper(link)
-elif opts.ip:
-    output = curses.wrapper(ip)
+elif opts.statistics == 'ip':
+    output = curses.wrapper(statistics_ip)
 
 print(output)
 sys.exit(0)

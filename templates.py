@@ -15,7 +15,9 @@ link="""[$name] $ips
         errors:$tx_errors ($tx_errors_abso) dropped:$tx_dropped ($tx_dropped_abso) carrier:$tx_carrier ($tx_carrier_abso) collsns:$tx_collsns ($tx_collsns_abso)"""
 
 
-ip="""Ip:
+ip="""SYN_RECV count: $syn_recv_count ($syn_recv_count_abso)
+
+Ip:
     $totalpacketsreceived ($totalpacketsreceived_abso) total packets received
     $withinvalidaddresses ($withinvalidaddresses_abso) with invalid addresses 
     $forwarded ($forwarded_abso) forwarded
@@ -31,9 +33,12 @@ ip="""Ip:
     $fragmentsfailed ($fragmentsfailed_abso) fragments failed
     $fragmentscreated ($fragmentscreated_abso) fragments created
 IpExt:
+    InNoRoutes: $InNoRoutes ($InNoRoutes_abso)
     InMcastPkts: $InMcastPkts ($InMcastPkts_abso)
+    OutMcastPkts: $OutMcastPkts ($OutMcastPkts_abso)
     InBcastPkts: $InBcastPkts ($InBcastPkts_abso)
     InOctets: $InOctets ($InOctets_abso)
     OutOctets: $OutOctets ($OutOctets_abso)
     InMcastOctets: $InMcastOctets ($InMcastOctets_abso)
+    OutMcastOctets: $OutMcastOctets ($OutMcastOctets_abso)
     InBcastOctets: $InBcastOctets ($InBcastOctets_abso)"""

@@ -60,6 +60,7 @@ def ip_s_link(int_list):
         data[name] = dict(zip(keys, values))
     return data
 
+
 def netstat_s(sect_list):
     output = get_output('netstat -s')
     # Split each section up and remove empty entries
