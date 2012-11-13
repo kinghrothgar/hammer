@@ -81,10 +81,16 @@ def get_page(body, page, height):
     current_page = 1
     page_dic = {1:''}
     for index in range(len(body_split)):
+        # If current page is filled to the usable_height, increment current page
+        # and start new page
         if int(ceil((index + 1) / float(usable_height))) > current_page:
             current_page += 1
             page_dic[current_page] = ''
-        page_dic[current_page] += body_split[index] + '\n'
+        # If current line is the last line of the page, don't add \n
+        if (index + 1) / usable_height == current_page:
+            page_dic[current_page] += body_split[index]
+        else:
+            page_dic[current_page] += body_split[index] + '\n'
     if page > current_page:
         page = current_page
     return (page_dic[page], page, current_page)
@@ -127,6 +133,7 @@ def link(stdscr):
         
         try: stdscr.addstr(0, 0, output)
         except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
+        stdscr.clear()
         stdscr.refresh()
         time.sleep(opts.delay)
 
@@ -178,6 +185,7 @@ def statistics_ip(stdscr):
         # Compile header, body, and footer to output
         output = header + body
 
+        stdscr.clear()
         try: stdscr.addstr(0, 0, output)
         except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
         stdscr.refresh()
@@ -229,6 +237,7 @@ def statistics_tcpv(stdscr):
         # Compile header, body, and footer to output
         output = header + body
 
+        stdscr.clear()
         try: stdscr.addstr(0, 0, output)
         except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
         stdscr.refresh()
