@@ -6,6 +6,8 @@ $start_time --> $current_time | Page: $current_page/$last_page
 
 """
 
+footer="""[r] reset [Page Up/Down] change pages [+/-] change delay [q] quit"""
+
 link="""[$name] $ips
     RX  bytes: $rx_bytes ($rx_bytes_abso)
         packets: $rx_packets ($rx_packets_abso)

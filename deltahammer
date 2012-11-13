@@ -88,8 +88,9 @@ def get_stats_page(stdscr, template, original_data, current_data, requested_page
     # Get current page from body if given
     if requested_page > 0:
         header_len = len(re.findall('\n', templates.header))
-        body_len = len(re.findall('\n', body))
-        usable_height = height - header_len
+        footer_len = len(re.findall('\n', templates.footer)) + 1
+        body_len = len(re.findall('\n', body)) + 1
+        usable_height = height - header_len - footer_len
         body_split = body.split('\n')
         page_dic = {1:''}
         for index in range(len(body_split)):
@@ -98,11 +99,7 @@ def get_stats_page(stdscr, template, original_data, current_data, requested_page
             if int(ceil((index + 1) / float(usable_height))) > current_page:
                 current_page += 1
                 page_dic[current_page] = ''
-            # If current line is the last line of the page, don't add \n
-            if (index + 1) / usable_height == current_page:
-                page_dic[current_page] += body_split[index]
-            else:
-                page_dic[current_page] += body_split[index] + '\n'
+            page_dic[current_page] += body_split[index] + '\n'
         # If requested_page is greater than the last page, set to last page
         if requested_page > current_page:
             requested_page = current_page
@@ -111,7 +108,7 @@ def get_stats_page(stdscr, template, original_data, current_data, requested_page
     header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
                                                         start_time=opts.start_time, current_time=current_time,
                                                         current_page=requested_page, last_page=current_page)
-    output = header + body
+    output = header + "header:%s footer:%s body:%s" %(header_len, footer_len, body_len) + body
 
     return (output, requested_page)
 
@@ -162,6 +159,7 @@ def link(stdscr):
             section = Template(section).safe_substitute(current_data[name])
             output += section + "\n\n"
         # Post output to screen
+        output += templates.footer
         post(stdscr, output)
 
 
@@ -196,6 +194,7 @@ def statistics_ip(stdscr):
         current_data = get_statistics_ip_data(sect_list)
         # Compiles body and then caculates the current section that can fit on the screen
         (output, current_page) = get_stats_page(stdscr, templates.ip, original_data, current_data, current_page)
+        output += '\n' + templates.footer
         post(stdscr, output)
 
         
@@ -230,6 +229,7 @@ def statistics_tcpv(stdscr):
         current_data = readers.netstat_s(sect_list)
         # Compiles body and then caculates the current section that can fit on the screen
         (output, current_page) = get_stats_page(stdscr, templates.tcpv, original_data, current_data, current_page)
+        output += templates.footer
         post(stdscr, output)
 
 
