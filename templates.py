@@ -1,9 +1,8 @@
 #!/usr/bin/python2.6
 
-header="""          [Delta Hammer] 
+header="""          [Delta Hammer]
 info from '$command' every $delta sec
-Start: $start_time | Current: $current_time
-Page: $current_page/$last_page
+$start_time --> $current_time | Page: $current_page/$last_page
 
 """
 
