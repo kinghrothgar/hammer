@@ -150,7 +150,7 @@ def link(stdscr):
         delta_data = compare_nested(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
         output = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
-                                                            start_time=opts.start_time, current_time=current_time
+                                                            start_time=opts.start_time, current_time=current_time,
                                                             current_page='1', last_page='1')
         for name in delta_data.keys():
             ips = ', '.join(interfaces[name]['ipv4'])
