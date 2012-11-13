@@ -59,7 +59,7 @@ def link(stdscr):
             return output 
         elif key == 'r':
             opts.start_time=time.strftime("%X", time.localtime())
-            original_data = readers.netstat_s(sect_list)
+            original_data = get_link_data(interfaces)
         elif key == '+':
             opts.delay += 1
         elif key == '-':
