@@ -108,7 +108,7 @@ def get_stats_page(stdscr, template, original_data, current_data, requested_page
     header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
                                                         start_time=opts.start_time, current_time=current_time,
                                                         current_page=requested_page, last_page=current_page)
-    output = header + "header:%s footer:%s body:%s" %(header_len, footer_len, body_len) + body
+    output = header + body
 
     return (output, requested_page)
 
@@ -194,7 +194,7 @@ def statistics_ip(stdscr):
         current_data = get_statistics_ip_data(sect_list)
         # Compiles body and then caculates the current section that can fit on the screen
         (output, current_page) = get_stats_page(stdscr, templates.ip, original_data, current_data, current_page)
-        output += '\n' + templates.footer
+        output += templates.footer
         post(stdscr, output)
 
         
