@@ -73,8 +73,9 @@ def get_key(stdscr):
 # Returns: string containing the requested section of the body
 #          int the page number returned
 #          int the last page number
-def get_stats_page(stdscr, template, original_data, current_data, requested_page):
+def get_stats_page(stdscr, template, original_data, current_data, requested_page=0):
     (height, width) = stdscr.getmaxyx()
+    current_time=time.strftime("%X", time.localtime())
     delta_data = compare(original_data, current_data)
     # Substitute the delta values into the template
     body = Template(template).safe_substitute(delta_data)
@@ -83,28 +84,36 @@ def get_stats_page(stdscr, template, original_data, current_data, requested_page
     body = Template(body).safe_substitute(current_data)
     # Remove any lines with unfilled in data
     body = re.sub('\n[^\n]+\$[^\n]+', '', body)
-    # Get current page from body
-    header_len = len(re.findall('\n', templates.header))
-    body_len = len(re.findall('\n', body))
-    usable_height = height - header_len
-    body_split = body.split('\n')
     current_page = 1
-    page_dic = {1:''}
-    for index in range(len(body_split)):
-        # If current page is filled to the usable_height, increment current page
-        # and start new page
-        if int(ceil((index + 1) / float(usable_height))) > current_page:
-            current_page += 1
-            page_dic[current_page] = ''
-        # If current line is the last line of the page, don't add \n
-        if (index + 1) / usable_height == current_page:
-            page_dic[current_page] += body_split[index]
-        else:
-            page_dic[current_page] += body_split[index] + '\n'
-    # If requested_page is greater than the last page, set to last page
-    if requested_page > current_page:
-        requested_page = current_page
-    return (page_dic[requested_page], requested_page, current_page)
+    # Get current page from body if given
+    if requested_page > 0:
+        header_len = len(re.findall('\n', templates.header))
+        body_len = len(re.findall('\n', body))
+        usable_height = height - header_len
+        body_split = body.split('\n')
+        page_dic = {1:''}
+        for index in range(len(body_split)):
+            # If current page is filled to the usable_height, increment current page
+            # and start new page
+            if int(ceil((index + 1) / float(usable_height))) > current_page:
+                current_page += 1
+                page_dic[current_page] = ''
+            # If current line is the last line of the page, don't add \n
+            if (index + 1) / usable_height == current_page:
+                page_dic[current_page] += body_split[index]
+            else:
+                page_dic[current_page] += body_split[index] + '\n'
+        # If requested_page is greater than the last page, set to last page
+        if requested_page > current_page:
+            requested_page = current_page
+        body = page_dic[requested_page]
+
+    header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
+                                                        start_time=opts.start_time, current_time=current_time,
+                                                        current_page=requested_page, last_page=current_page)
+    output = header + body
+
+    return (output, requested_page)
 
 
 # Updates screen, EXITS if string fails to post correctly
@@ -169,7 +178,8 @@ def statistics_ip(stdscr):
         # Get key and deal with it
         key = get_key(stdscr)
         if key == 'q':
-            return output 
+            (output, current_page) = get_stats_page(stdscr, templates.ip, original_data, current_data)
+            return output
         elif key == 'r':
             opts.start_time=time.strftime("%X", time.localtime())
             original_data = get_statistics_ip_data(sect_list)
@@ -184,15 +194,8 @@ def statistics_ip(stdscr):
             current_page += 1
         
         current_data = get_statistics_ip_data(sect_list)
-        current_time=time.strftime("%X", time.localtime())
         # Compiles body and then caculates the current section that can fit on the screen
-        (body, current_page, last_page) = get_stats_page(stdscr, templates.ip, original_data, current_data, current_page) 
-        header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
-                                                            start_time=opts.start_time, current_time=current_time,
-                                                            current_page=current_page, last_page=last_page)
-        # Compile header, body, and footer to output
-        output = header + body
-        # Post output to screen
+        (output, current_page) = get_stats_page(stdscr, templates.ip, original_data, current_data, current_page)
         post(stdscr, output)
 
         
@@ -209,7 +212,8 @@ def statistics_tcpv(stdscr):
         # Get key and deal with it
         key = get_key(stdscr)
         if key == 'q':
-            return output 
+            (output, current_page) = get_stats_page(stdscr, templates.tcpv, original_data, current_data)
+            return output
         elif key == 'r':
             opts.start_time=time.strftime("%X", time.localtime())
             original_data = readers.netstat_s(sect_list)
@@ -224,15 +228,8 @@ def statistics_tcpv(stdscr):
             current_page += 1
         
         current_data = readers.netstat_s(sect_list)
-        current_time=time.strftime("%X", time.localtime())
         # Compiles body and then caculates the current section that can fit on the screen
-        (body, current_page, last_page) = get_stats_page(stdscr, templates.tcp, original_data, current_data, current_page)
-        header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
-                                                            start_time=opts.start_time, current_time=current_time)
-
-        # Compile header, body, and footer to output
-        output = header + body
-        # Post output to screen
+        (output, current_page) = get_stats_page(stdscr, templates.tcpv, original_data, current_data, current_page)
         post(stdscr, output)
 
 
@@ -265,6 +262,8 @@ if opts.interface:
     output = curses.wrapper(link)
 elif opts.statistics == 'ip':
     output = curses.wrapper(statistics_ip)
+elif opts.statistics == 'tcpv':
+    output = curses.wrapper(statistics_tcpv)
 
 print(output)
 sys.exit(0)
