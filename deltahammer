@@ -4,6 +4,7 @@ import time
 import optparse
 import sys
 import re
+import signal
 import readers
 import templates
 from math import ceil
@@ -12,6 +13,12 @@ from string import Template
 description="""Description: %prog is a tool to monitor the delta of data and statistics from various static commands.
 The program requires either the interface option (-i INTERFACE) or the statistics option (-s TARGET).
 Values not in parentheses are deltas, values in parentheses are absolutes."""
+
+
+# Arguments:
+def sigwinch_handler(n, frame):
+    curses.endwin()
+    curses.initscr()
 
 
 # Arguments: two dictionaries
@@ -263,6 +270,9 @@ elif opts.delay < 1:
 
 # Set start time
 opts.start_time=time.strftime("%X", time.localtime())
+
+# To deal with terminal resizes:
+signal.signal(signal.SIGWINCH, sigwinch_handler)
 
 if opts.interface:
     output = curses.wrapper(link)
