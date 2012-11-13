@@ -122,7 +122,6 @@ def post(stdscr, output):
         try: stdscr.addstr(0, 0, output)
         except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
         stdscr.refresh()
-        time.sleep(opts.delay)
 
 
 # Main function for the interface page
@@ -132,20 +131,7 @@ def link(stdscr):
     curses.use_default_colors()
     interfaces = readers.ip_a()
     original_data = get_link_data(interfaces)
-    output = None
     while True:
-        # Get key and deal with it
-        key = get_key(stdscr)
-        if key == 'q':
-            return output 
-        elif key == 'r':
-            opts.start_time=time.strftime("%X", time.localtime())
-            original_data = get_link_data(interfaces)
-        elif key == '+':
-            opts.delay += 1
-        elif key == '-':
-            if opts.delay > 1: opts.delay -= 1
-        
         current_data = get_link_data(interfaces)
         delta_data = compare_nested(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
@@ -164,6 +150,22 @@ def link(stdscr):
         output += templates.footer
         post(stdscr, output)
 
+        # While delay, get keys and deal with it them
+        stop = time.time() + int(opts.delay)
+        while time.time() < stop:
+            key = get_key(stdscr)
+            if key == 'q':
+                return output 
+            elif key == 'r':
+                opts.start_time=time.strftime("%X", time.localtime())
+                original_data = get_link_data(interfaces)
+            elif key == '+':
+                opts.delay += 1
+            elif key == '-':
+                if opts.delay > 1: opts.delay -= 1
+
+
+
 
 # Main function for the statistics IP page
 # Argument: a curses window
@@ -172,33 +174,34 @@ def statistics_ip(stdscr):
     curses.use_default_colors()
     sect_list = ['Ip','IpExt']
     original_data = get_statistics_ip_data(sect_list)
-    output = None
     current_page = 1
     while True:
-        # Get key and deal with it
-        key = get_key(stdscr)
-        if key == 'q':
-            (output, current_page) = get_stats_page(stdscr, templates.ip, original_data, current_data)
-            return output
-        elif key == 'r':
-            opts.start_time=time.strftime("%X", time.localtime())
-            original_data = get_statistics_ip_data(sect_list)
-        elif key == '+':
-            opts.delay += 1
-        elif key == '-':
-            if opts.delay > 1: opts.delay -= 1
-        elif key == 'KEY_PPAGE':
-            if current_page > 1: current_page -= 1
-        # Check if there is a next page later
-        elif key == 'KEY_NPAGE':
-            current_page += 1
-        
         current_data = get_statistics_ip_data(sect_list)
         # Compiles body and then caculates the current section that can fit on the screen
         (output, current_page) = get_stats_page(stdscr, templates.ip, original_data, current_data, current_page)
         output += templates.footer
         post(stdscr, output)
 
+        # While delay, get keys and deal with it them
+        stop = time.time() + int(opts.delay)
+        while time.time() < stop:
+            key = get_key(stdscr)
+            if key == 'q':
+                (output, current_page) = get_stats_page(stdscr, templates.ip, original_data, current_data)
+                return output
+            elif key == 'r':
+                opts.start_time=time.strftime("%X", time.localtime())
+                original_data = get_statistics_ip_data(sect_list)
+            elif key == '+':
+                opts.delay += 1
+            elif key == '-':
+                if opts.delay > 1: opts.delay -= 1
+            elif key == 'KEY_PPAGE':
+                if current_page > 1: current_page -= 1
+            # Check if there is a next page later
+            elif key == 'KEY_NPAGE':
+                current_page += 1
+            
         
 # Main function for the statistics IP page
 # Argument: a curses window
@@ -207,33 +210,34 @@ def statistics_tcpv(stdscr):
     curses.use_default_colors()
     sect_list = ['Tcp','TcpExt']
     original_data = readers.netstat_s(sect_list)
-    output = None
     current_page = 1
     while True:
-        # Get key and deal with it
-        key = get_key(stdscr)
-        if key == 'q':
-            (output, current_page) = get_stats_page(stdscr, templates.tcpv, original_data, current_data)
-            return output
-        elif key == 'r':
-            opts.start_time=time.strftime("%X", time.localtime())
-            original_data = readers.netstat_s(sect_list)
-        elif key == '+':
-            opts.delay += 1
-        elif key == '-':
-            if opts.delay > 1: opts.delay -= 1
-        elif key == 'KEY_PPAGE':
-            if current_page > 1: current_page -= 1
-        # Check if there is a next page later
-        elif key == 'KEY_NPAGE':
-            current_page += 1
-        
         current_data = readers.netstat_s(sect_list)
         # Compiles body and then caculates the current section that can fit on the screen
         (output, current_page) = get_stats_page(stdscr, templates.tcpv, original_data, current_data, current_page)
         output += templates.footer
         post(stdscr, output)
 
+        # While delay, get keys and deal with it them
+        stop = time.time() + int(opts.delay)
+        while time.time() < stop:
+            key = get_key(stdscr)
+            if key == 'q':
+                (output, current_page) = get_stats_page(stdscr, templates.tcpv, original_data, current_data)
+                return output
+            elif key == 'r':
+                opts.start_time=time.strftime("%X", time.localtime())
+                original_data = readers.netstat_s(sect_list)
+            elif key == '+':
+                opts.delay += 1
+            elif key == '-':
+                if opts.delay > 1: opts.delay -= 1
+            elif key == 'KEY_PPAGE':
+                if current_page > 1: current_page -= 1
+            # Check if there is a next page later
+            elif key == 'KEY_NPAGE':
+                current_page += 1
+            
 
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root
