@@ -2,15 +2,16 @@
 import curses
 import time
 import optparse
-import readers
 import sys
-import templates
 import re
+import readers
+import templates
 from math import ceil
 from string import Template
 
 description="""Description: %prog is a tool to monitor the delta of data and statistics from various static commands.
-The program requires either the interface option (-i INTERFACE) or the statistics option (-s TARGET)."""
+The program requires either the interface option (-i INTERFACE) or the statistics option (-s TARGET).
+Values not in parentheses are deltas, values in parentheses are absolutes."""
 
 
 # Arguments: two dictionaries
