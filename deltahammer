@@ -6,6 +6,7 @@ import readers
 import sys
 import templates
 import re
+from math import ceil
 from string import Template
 
 description="""Description: %prog is a tool to monitor the delta of data and statistics from various static commands.
@@ -66,6 +67,29 @@ def get_key(stdscr):
     else: return key
 
 
+# Arguments: body - a multiline string
+#            page - an int of the page wanted
+#            height - screen height
+# Returns: string containing the requested section of the body
+#          int the page number returned
+#          int the last page number
+def get_page(body, page, height):
+    header_len = len(re.findall('\n', templates.header))
+    body_len = len(re.findall('\n', body))
+    usable_height = height - header_len
+    body_split = body.split('\n')
+    current_page = 1
+    page_dic = {1:''}
+    for index in range(len(body_split)):
+        if int(ceil((index + 1) / float(usable_height))) > current_page:
+            current_page += 1
+            page_dic[current_page] = ''
+        page_dic[current_page] += body_split[index] + '\n'
+    if page > current_page:
+        page = current_page
+    return (page_dic[page], page, current_page)
+
+
 # Main function for the interface page
 # Argument: a curses window
 # Return: a string of the last output
@@ -100,7 +124,9 @@ def link(stdscr):
             section = section.replace('_abso', '')
             section = Template(section).safe_substitute(current_data[name])
             output += section + "\n\n"
-        stdscr.addstr(0, 0, output)
+        
+        try: stdscr.addstr(0, 0, output)
+        except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
         stdscr.refresh()
         time.sleep(opts.delay)
 
@@ -110,9 +136,11 @@ def link(stdscr):
 # Return: a string of the last output
 def statistics_ip(stdscr):
     curses.use_default_colors()
+    (height, width) = stdscr.getmaxyx()
     sect_list = ['Ip','IpExt']
     original_data = get_statistics_ip_data(sect_list)
     output = None
+    current_page = 1
     while True:
         # Get key and deal with it
         key = get_key(stdscr)
@@ -125,25 +153,87 @@ def statistics_ip(stdscr):
             opts.delay += 1
         elif key == '-':
             if opts.delay > 1: opts.delay -= 1
+        elif key == 'KEY_PPAGE':
+            if current_page > 1: current_page -= 1
+        # Check if there is a next page later
+        elif key == 'KEY_NPAGE':
+            current_page += 1
         
         current_data = get_statistics_ip_data(sect_list)
         delta_data = compare(original_data, current_data)
         current_time=time.strftime("%X", time.localtime())
-        output = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
-                                                            start_time=opts.start_time, current_time=current_time)
+        
         # Substitute the delta values into the template
-        output += Template(templates.ip).safe_substitute(delta_data)
+        body = Template(templates.ip).safe_substitute(delta_data)
         # Substitute the absolute values in
-        output = output.replace('_abso', '')
-        output = Template(output).safe_substitute(current_data)
+        body = body.replace('_abso', '')
+        body = Template(body).safe_substitute(current_data)
         # Remove any lines with unfilled in data
-        output = re.sub('\n[^\n]+\$[^\n]+', '', output)
+        body = re.sub('\n[^\n]+\$[^\n]+', '', body)
+        (body, current_page, last_page) = get_page(body, current_page, height)
 
-        stdscr.addstr(0, 0, output)
+        header = Template(templates.header).safe_substitute(command='netstat -s', delta=opts.delay, 
+                                                            start_time=opts.start_time, current_time=current_time,
+                                                            current_page=current_page, last_page=last_page)
+        # Compile header, body, and footer to output
+        output = header + body
+
+        try: stdscr.addstr(0, 0, output)
+        except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
         stdscr.refresh()
         time.sleep(opts.delay)
 
         
+# Main function for the statistics IP page
+# Argument: a curses window
+# Return: a string of the last output
+def statistics_tcpv(stdscr):
+    curses.use_default_colors()
+    (height, width) = stdscr.getmaxyx()
+    sect_list = ['Tcp','TcpExt']
+    original_data = readers.netstat_s(sect_list)
+    output = None
+    current_page = 1
+    while True:
+        # Get key and deal with it
+        key = get_key(stdscr)
+        if key == 'q':
+            return output 
+        elif key == 'r':
+            opts.start_time=time.strftime("%X", time.localtime())
+            original_data = readers.netstat_s(sect_list)
+        elif key == '+':
+            opts.delay += 1
+        elif key == '-':
+            if opts.delay > 1: opts.delay -= 1
+        elif key == 'KEY_PPAGE':
+            if current_page > 1: current_page -= 1
+        # Check if there is a next page later
+        elif key == 'KEY_NPAGE':
+            current_page += 1
+        
+        current_data = readers.netstat_s(sect_list)
+        delta_data = compare(original_data, current_data)
+        current_time=time.strftime("%X", time.localtime())
+        # Substitute the delta values into the template
+        body += Template(templates.ip).safe_substitute(delta_data)
+        # Substitute the absolute values in
+        body = body.replace('_abso', '')
+        body = Template(body).safe_substitute(current_data)
+        # Remove any lines with unfilled in data
+        body = re.sub('\n[^\n]+\$[^\n]+', '', output)
+        
+        header = Template(templates.header).safe_substitute(command='ip -s link', delta=opts.delay, 
+                                                            start_time=opts.start_time, current_time=current_time)
+
+        # Compile header, body, and footer to output
+        output = header + body
+
+        try: stdscr.addstr(0, 0, output)
+        except: sys.exit('error: screen creation failed. Your terminal size is small and you should feel small')
+        stdscr.refresh()
+        time.sleep(opts.delay)
+
 
 # Parse settings from commandline options
 # TODO: add program description including that must be run as root

@@ -3,6 +3,7 @@
 header="""          [Delta Hammer] 
 info from '$command' every $delta sec
 Start: $start_time | Current: $current_time
+Page: $current_page/$last_page
 
 """
 
